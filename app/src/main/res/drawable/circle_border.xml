@@ -1,0 +1,11 @@
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FFFFFF"/>
+            <stroke
+                android:width="2dp"
+                android:color="#D3D3D3" /> <!-- Border color -->
+            <corners android:radius="100dp"/>s
+        </shape>
+    </item>
+</layer-list>

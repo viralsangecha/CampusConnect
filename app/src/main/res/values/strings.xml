@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">CampusConnect</string>
+    <string-array name="department_list">
+        <item>cs</item>
+        <item>b.com</item>
+        <item>bba</item>
+    </string-array>
+    <string-array name="class_list">
+        <item>class 1</item>
+        <item>class 2</item>
+    </string-array>
+</resources>

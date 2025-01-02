@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="cyan">#00C6FF</color>
+    <color name="light_gray">#F8F9FA</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="tite">#5e0f27</color>
+    <color name="amgreen">#28A745</color>
+    <color name="gold">#FFD700</color>
+    <color name="dark">#1C1C1C</color>
+    <color name="light_grey">#E5E5E5</color>
+    <color name="burgandy">#800020</color>
+    <color name="royal_blue">#0B3D91</color>
+    <color name="dark_charcoal">#1C1C1C</color>
+    <color name="burgundy">#800020</color>
+    <color name="midnight_blue">#2C3E50</color>
+    <color name="platinum">#E5E4E2</color>
+    <color name="emerald_green">#3DAF65</color>
+    <color name="deep_purple">#673AB7</color>
+    <color name="ruby_red">#9B111E</color>
+    <color name="slate_gray">#708090</color>
+    <color name="antique_gold">#A48C2E</color>
+    <color name="teal_200">#80CBC4</color>
+    <color name="jet_black">#0A0A0A</color>
+    <color name="pearl_white">#FDFDFA</color>
+    <color name="champagne">#F7E7CE</color>
+    <color name="bronze">#CD7F32</color>
+    <color name="sapphire_blue">#0F52BA</color>
+    <color name="rose_gold">#B76E79</color>
+    <color name="amethyst">#9966CC</color>
+    <color name="green">#0C4B11</color>
+    <color name="light_red">#B44646</color>
+    <!-- Primary Colors -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- Shades of Gray -->
+    <color name="gray">#B0BEC5</color> <!-- Light Gray -->
+    <color name="dark_gray">#455A64</color> <!-- Darker Gray -->
+
+    <!-- Blue Shades -->
+    <color name="blue">#2196F3</color> <!-- Default Blue -->
+    <color name="dark_blue">#1565C0</color> <!-- Pressed Blue -->
+</resources>

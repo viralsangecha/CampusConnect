@@ -1,0 +1,263 @@
+package com.example.campusconnect;
+
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+
+import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class add_student extends AppCompatActivity {
+    Button student_add,std_list,update_std,delete_std;
+    TextView student_username_signup, student_password_signup, student_name,student_no;
+    Spinner class_list;
+    FirebaseAuth auth = FirebaseAuth.getInstance();
+    FirebaseUser user = auth.getCurrentUser();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_add_student);
+
+        BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
+        bottomNavigationView.setSelectedItemId(R.id.addstd);
+        bottomNavigationView.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                int itemId = item.getItemId();
+
+                if (itemId == R.id.thome)
+                {
+                    Intent intent=new Intent(getApplicationContext(), teacher_dashboard.class);
+                    startActivity(intent);
+                    finish();
+                    return true;
+
+                }
+                else if (itemId == R.id.addstd)
+                {
+                    Intent intent=new Intent(getApplicationContext(), add_student.class);
+                    startActivity(intent);
+                    finish();
+                    return true;
+
+                }
+                else if (itemId == R.id.tprofile)
+                {
+                    Intent intent=new Intent(getApplicationContext(),teacher_profile.class);
+                    startActivity(intent);
+                    finish();
+                    return true;
+
+                }
+                else
+                {
+                    return false; // No valid menu item selected
+                }
+            }
+        });
+
+        student_username_signup = findViewById(R.id.student_username_signup);
+        student_password_signup = findViewById(R.id.student_password_signup);
+        student_name = findViewById(R.id.student_name);
+        class_list = findViewById(R.id.class_list);
+        student_no=findViewById(R.id.student_no);
+
+
+        std_list = findViewById(R.id.std_list);
+        std_list.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(getApplicationContext(),show_std.class);
+                startActivity(intent);
+            }
+        });
+
+        student_password_signup.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (s.length() < 6) {
+                    student_password_signup.setError("Password must be at least 6 characters");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+        student_username_signup.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+                if (!student_username_signup.getText().toString().matches(emailPattern))
+                {
+                    student_username_signup.setError("Invalid email");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+        student_no.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!(student_no.length() ==10))
+                {
+                    student_no.setError("Invalid Mobile Number");
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        student_add = findViewById(R.id.student_signup_btn);
+        student_add.setOnClickListener(v -> {
+            String email = student_username_signup.getText().toString().trim();
+            String password = student_password_signup.getText().toString().trim();
+            String name = student_name.getText().toString().trim();
+            String mobile_no = student_no.getText().toString().trim();
+
+            if (email.isEmpty() || password.isEmpty() || name.isEmpty() || class_list.getSelectedItem().toString().isEmpty() || mobile_no.isEmpty())
+            {
+                Toast.makeText(this, "Enter All Details", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+            if (!email.matches(emailPattern))
+            {
+                Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (password.length()<6)
+            {
+                Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (mobile_no.length()>=10)
+            {
+                Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+            db.runTransaction(transaction -> {
+                // Get the current value of the sequence
+                DocumentReference sequenceDoc = db.collection("sequences").document("students");
+                DocumentSnapshot snapshot = transaction.get(sequenceDoc);
+
+                long currentId = snapshot.exists() ? snapshot.getLong("current_id") : 0;
+                long newId = currentId + 1;
+
+                // Update the sequence
+                transaction.update(sequenceDoc, "current_id", newId);
+
+                return newId;
+            }).addOnSuccessListener(newStdId -> {
+                // Use the generated std_id to create the student
+                auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        String uid = auth.getCurrentUser().getEmail();
+                        Map<String, Object> userData = new HashMap<>();
+                        userData.put("name", student_name.getText().toString());
+                        userData.put("stdid", newStdId); // System-generated std_id
+                        userData.put("class", class_list.getSelectedItem().toString());
+                        userData.put("email", email);
+                        userData.put("mobile_no", mobile_no);
+                        userData.put("role", "student");
+
+                        db.collection("users").document(student_username_signup.getText().toString()).set(userData).addOnSuccessListener(aVoid -> {
+                            Toast.makeText(this, "Student added successfully!", Toast.LENGTH_SHORT).show();
+
+                            // Restore teacher session
+                            SharedPreferences prefs = getSharedPreferences("CampusConnectPrefs", MODE_PRIVATE);
+                            String teacherEmail = prefs.getString("teacherEmail", null);
+                            String teacherPassword = prefs.getString("teacherPassword", null);
+
+                            auth.signOut();
+
+                            if (teacherEmail != null && teacherPassword != null)
+                            {
+                                auth.signInWithEmailAndPassword(teacherEmail, teacherPassword).addOnCompleteListener(signInTask ->
+                                {
+                                    if (signInTask.isSuccessful())
+                                    {
+                                        Toast.makeText(this, "Switched back to teacher account.", Toast.LENGTH_SHORT).show();
+                                        startActivity(new Intent(this, add_student.class));
+                                    }
+                                    else
+                                    {
+                                        Toast.makeText(this, "Failed to log back into teacher account.", Toast.LENGTH_SHORT).show();
+                                    }
+                                    finish();
+                                });
+                            }
+                            else
+                            {
+                                Toast.makeText(this, "Teacher session not found. Please log in again.", Toast.LENGTH_SHORT).show();
+                                startActivity(new Intent(this, teacher_login.class));
+                                finish();
+                            }
+                        });
+                    }
+                });
+            }).addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed to generate std_id. Try again.", Toast.LENGTH_SHORT).show();
+            });
+        });
+
+        update_std=findViewById(R.id.update_std);
+        update_std.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(getApplicationContext(),update_std.class);
+                startActivity(intent);
+
+            }
+        });
+
+        delete_std=findViewById(R.id.delete_std);
+        delete_std.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent=new Intent(getApplicationContext(),delete_std.class);
+                startActivity(intent);
+
+            }
+        });
+
+    }
+}

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/thome"
+        android:icon="@drawable/home"
+        android:iconTint="@color/black"
+        android:title="Home" />
+
+    <item
+        android:id="@+id/addstd"
+        android:icon="@drawable/add"
+        android:iconTint="@color/black"
+        android:title="Students Manager" />
+
+    <item
+        android:id="@+id/tprofile"
+        android:icon="@drawable/profile"
+        android:title="Profile" />
+</menu>
