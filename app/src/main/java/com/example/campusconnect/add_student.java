@@ -5,9 +5,11 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,12 +38,14 @@ public class add_student extends AppCompatActivity {
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUser user = auth.getCurrentUser();
 
+    ProgressBar loadingSpinner;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_add_student);
 
+        loadingSpinner = findViewById(R.id.addstdloading);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setSelectedItemId(R.id.addstd);
         bottomNavigationView.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
@@ -116,7 +120,7 @@ public class add_student extends AppCompatActivity {
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
+                String emailPattern = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}";
                 if (!student_username_signup.getText().toString().matches(emailPattern))
                 {
                     student_username_signup.setError("Invalid email");
@@ -148,29 +152,35 @@ public class add_student extends AppCompatActivity {
             String password = student_password_signup.getText().toString().trim();
             String name = student_name.getText().toString().trim();
             String mobile_no = student_no.getText().toString().trim();
+            String className = class_list.getSelectedItem() != null ? class_list.getSelectedItem().toString().trim() : "";
 
-            if (email.isEmpty() || password.isEmpty() || name.isEmpty() || class_list.getSelectedItem().toString().isEmpty() || mobile_no.isEmpty())
-            {
+            // Check for empty fields
+            if (email.isEmpty() || password.isEmpty() || name.isEmpty() || className.isEmpty() || mobile_no.isEmpty()) {
                 Toast.makeText(this, "Enter All Details", Toast.LENGTH_SHORT).show();
                 return;
             }
-            String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
-            if (!email.matches(emailPattern))
-            {
-                Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+
+            Log.d("EmailValidation", "Starting email validation...");
+            // Email validation
+            String emailPattern = "[a-z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-z]{2,}";
+            if (!email.matches(emailPattern)) {
+                Toast.makeText(getApplicationContext(), "Invalid Email", Toast.LENGTH_SHORT).show();
                 return;
             }
+            Log.d("EmailValidation", "Valid Email: " + email);
+
             if (password.length()<6)
             {
-                Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Invalid Password ", Toast.LENGTH_SHORT).show();
                 return;
             }
-            if (mobile_no.length()>=10)
+            if (mobile_no.length()!=10)
             {
-                Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Invalid Number ", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            loadingSpinner.setVisibility(View.VISIBLE);
             FirebaseAuth auth = FirebaseAuth.getInstance();
             FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -188,6 +198,7 @@ public class add_student extends AppCompatActivity {
                 return newId;
             }).addOnSuccessListener(newStdId -> {
                 // Use the generated std_id to create the student
+
                 auth.createUserWithEmailAndPassword(email, password).addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         String uid = auth.getCurrentUser().getEmail();
@@ -207,6 +218,7 @@ public class add_student extends AppCompatActivity {
                             String teacherEmail = prefs.getString("teacherEmail", null);
                             String teacherPassword = prefs.getString("teacherPassword", null);
 
+                            loadingSpinner.setVisibility(View.GONE);
                             auth.signOut();
 
                             if (teacherEmail != null && teacherPassword != null)

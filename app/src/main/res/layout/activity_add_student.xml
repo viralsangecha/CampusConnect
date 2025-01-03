@@ -28,6 +28,7 @@
             android:layout_marginTop="15dp"
             android:padding="16dp">
 
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -57,6 +58,13 @@
                 android:padding="12dp"
                 android:layout_marginBottom="12dp" />
 
+            <ProgressBar
+                android:id="@+id/addstdloading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="20dp"
+                android:visibility="gone" />
             <EditText
                 android:id="@+id/student_name"
                 android:layout_width="match_parent"

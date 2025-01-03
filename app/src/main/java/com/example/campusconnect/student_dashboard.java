@@ -1,6 +1,7 @@
 package com.example.campusconnect;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
@@ -15,6 +16,7 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -77,6 +79,7 @@ public class student_dashboard extends AppCompatActivity {
     ListView attendanceListView;
     ArrayAdapter<String> attendanceAdapter;
     List<String> attendanceList = new ArrayList<>();
+    ProgressBar loadingSpinner,markloading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,6 +88,8 @@ public class student_dashboard extends AppCompatActivity {
         setContentView(R.layout.activity_student_dashboard);
         AutoMarkAbsence autoMarkAbsence = new AutoMarkAbsence();
         autoMarkAbsence.fetchAndMarkAbsence();
+        loadingSpinner = findViewById(R.id.stddash_loading);
+        markloading = findViewById(R.id.markatten_loading);
 
 
 
@@ -125,14 +130,23 @@ public class student_dashboard extends AppCompatActivity {
         });
 
         student_logout_btn = findViewById(R.id.student_logout_btn);
-        student_logout_btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                auth.signOut();
-                Intent i = new Intent(getApplicationContext(), MainActivity.class);
-                startActivity(i);
-                finish();
-            }
+        student_logout_btn.setOnClickListener(v -> {
+            // Create an AlertDialog to confirm logout
+            new AlertDialog.Builder(this)
+                    .setTitle("Logout")
+                    .setMessage("Are you sure you want to log out?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        // Perform logout
+                        auth.signOut();
+                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                        finish();
+                    })
+                    .setNegativeButton("No", (dialog, which) -> {
+                        // Dismiss the dialog
+                        dialog.dismiss();
+                    })
+                    .create()
+                    .show();
         });
 
         LocalDate today = LocalDate.now();
@@ -145,6 +159,7 @@ public class student_dashboard extends AppCompatActivity {
         mark_attendence.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                markloading.setVisibility(View.VISIBLE);
                 // Ensure user and todayDate are properly initialized
                 if (user == null || todayDate == null) {
                     Toast.makeText(student_dashboard.this, "User or date is not initialized", Toast.LENGTH_SHORT).show();
@@ -189,6 +204,7 @@ public class student_dashboard extends AppCompatActivity {
                                     .setValue(attendanceData) // Set the data
                                     .addOnSuccessListener(aVoid -> {
                                         Log.d("Firebase", "Attendance marked successfully");
+                                        markloading.setVisibility(View.GONE);
                                         Toast.makeText(student_dashboard.this, "Attendance Marked!", Toast.LENGTH_LONG).show();
                                     })
                                     .addOnFailureListener(e -> {
@@ -209,8 +225,10 @@ public class student_dashboard extends AppCompatActivity {
         Getatten.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 attendanceList.clear(); // Clear the list before adding new data
 
+                loadingSpinner.setVisibility(View.VISIBLE);
                 // Get the current logged-in user
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if (user == null) {
@@ -250,6 +268,7 @@ public class student_dashboard extends AppCompatActivity {
 
                                         // Match the logged-in user's email
                                         if (email != null && email.equals(userEmail)) {
+                                            loadingSpinner.setVisibility(View.GONE);
                                             String name = studentSnapshot.child("name").getValue(String.class);
                                             String status = studentSnapshot.child("status").getValue(String.class);
 

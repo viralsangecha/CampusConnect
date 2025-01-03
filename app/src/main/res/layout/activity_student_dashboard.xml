@@ -66,6 +66,13 @@
         android:background="@drawable/hover"
         android:layout_margin="30dp"
         android:text="Mark Attendance" />
+        <ProgressBar
+            android:id="@+id/markatten_loading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="20dp"
+            android:visibility="gone" />
 
     <Button
         android:id="@+id/Getatten"
@@ -95,6 +102,13 @@
                 android:layout_centerHorizontal="true"
                 android:fontFamily="sans-serif-medium" />
 
+            <ProgressBar
+                android:id="@+id/stddash_loading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="20dp"
+                android:visibility="gone" />
                 <!-- ListView -->
                 <ListView
                     android:id="@+id/showatten"

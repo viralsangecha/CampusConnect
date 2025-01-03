@@ -1,5 +1,6 @@
 package com.example.campusconnect;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -16,6 +17,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.PopupWindow;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -58,12 +60,16 @@ public class teacher_dashboard extends AppCompatActivity {
     FirebaseUser user = auth.getCurrentUser();
     ArrayAdapter<String> adapter;
     ArrayList<String> attendanceData = new ArrayList<>();
+    ProgressBar loadingSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_teacher_dashboard);
+        loadingSpinner = findViewById(R.id.dash_loading);
+        loadingSpinner.setVisibility(View.VISIBLE);
+
 
         record_cat = findViewById(R.id.record_category); // Correctly initialize record_cat
 
@@ -99,9 +105,22 @@ public class teacher_dashboard extends AppCompatActivity {
 
         logot_btn = findViewById(R.id.logout_btn);
         logot_btn.setOnClickListener(v -> {
-            auth.signOut();
-            startActivity(new Intent(getApplicationContext(), MainActivity.class));
-            finish();
+            // Create an AlertDialog to confirm logout
+            new AlertDialog.Builder(this)
+                    .setTitle("Logout")
+                    .setMessage("Are you sure you want to log out?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        // Perform logout
+                        auth.signOut();
+                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                        finish();
+                    })
+                    .setNegativeButton("No", (dialog, which) -> {
+                        // Dismiss the dialog
+                        dialog.dismiss();
+                    })
+                    .create()
+                    .show();
         });
 
 
@@ -132,6 +151,7 @@ public class teacher_dashboard extends AppCompatActivity {
         search_button.setOnClickListener(v -> {
             String query = search_input.getText().toString().trim();
             if (query.isEmpty()) {
+                loadingSpinner.setVisibility(View.GONE);
                 Toast.makeText(this, "Please enter a name or date to search.", Toast.LENGTH_SHORT).show();
                 // Load today's attendance by default
                 loadAttendanceByDate(new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date()));
@@ -139,10 +159,12 @@ public class teacher_dashboard extends AppCompatActivity {
             }
 
             if (query.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                loadingSpinner.setVisibility(View.GONE);
                 // If query matches date format YYYY-MM-DD
                 record_cat.setText("Records of " + query);
                 loadAttendanceByDate(query);
             } else {
+                loadingSpinner.setVisibility(View.GONE);
                 // Otherwise, search by student name
                 record_cat.setText("Records of " + query);
                 searchAttendanceByName(query);

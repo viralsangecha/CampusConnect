@@ -1,5 +1,6 @@
 package com.example.campusconnect;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -61,48 +62,61 @@ public class delete_std extends AppCompatActivity {
 
 
 
-        delete=findViewById(R.id.delete);
+        delete = findViewById(R.id.delete);
         delete.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String did=delete_byid.getText().toString();
-                if(did.isEmpty())
-                {
-                    Toast.makeText(getApplicationContext(), "Enter Student Id ", Toast.LENGTH_SHORT).show();
+                String did = delete_byid.getText().toString();
+                if (did.isEmpty()) {
+                    Toast.makeText(getApplicationContext(), "Enter Student ID", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                int stdidToDelete = Integer.parseInt(delete_byid.getText().toString()); // Replace with the stdid you want to delete
 
+                int stdidToDelete = Integer.parseInt(did); // Replace with the stdid you want to delete
 
-                db.collection("users")
-                        .whereEqualTo("stdid", stdidToDelete)
-                        .get()
-                        .addOnCompleteListener(task -> {
-                            if (task.isSuccessful() && !task.getResult().isEmpty()) {
-                                // Assume there is only one document with the given stdid
-                                DocumentSnapshot document = task.getResult().getDocuments().get(0);
+                // Show confirmation dialog
+                new AlertDialog.Builder(v.getContext())
+                        .setTitle("Delete Confirmation")
+                        .setMessage("Are you sure you want to delete the user with ID: " + stdidToDelete + "?")
+                        .setPositiveButton("Yes", (dialog, which) -> {
+                            // Proceed with deletion
+                            db.collection("users")
+                                    .whereEqualTo("stdid", stdidToDelete)
+                                    .get()
+                                    .addOnCompleteListener(task -> {
+                                        if (task.isSuccessful() && !task.getResult().isEmpty()) {
+                                            // Assume there is only one document with the given stdid
+                                            DocumentSnapshot document = task.getResult().getDocuments().get(0);
 
-                                String documentId = document.getId(); // Get the document ID to delete it later
+                                            String documentId = document.getId(); // Get the document ID to delete it later
 
-                                // Step 1: Delete the Firestore document
-                                db.collection("users").document(documentId)
-                                        .delete()
-                                        .addOnCompleteListener(deleteTask -> {
-                                            if (deleteTask.isSuccessful()) {
-                                                Toast.makeText(getApplicationContext(), "Firestore document deleted successfully!", Toast.LENGTH_SHORT).show();
-                                            } else {
-                                                Toast.makeText(getApplicationContext(), "Failed to delete Firestore document.", Toast.LENGTH_SHORT).show();
-                                            }
-                                        });
-                            } else {
-                                Toast.makeText(getApplicationContext(), "No user found with the given stdid.", Toast.LENGTH_SHORT).show();
-                            }
+                                            // Step 1: Delete the Firestore document
+                                            db.collection("users").document(documentId)
+                                                    .delete()
+                                                    .addOnCompleteListener(deleteTask -> {
+                                                        if (deleteTask.isSuccessful()) {
+                                                            Toast.makeText(getApplicationContext(), "User deleted successfully!", Toast.LENGTH_SHORT).show();
+                                                        } else {
+                                                            Toast.makeText(getApplicationContext(), "Failed to delete user.", Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+                                        } else {
+                                            Toast.makeText(getApplicationContext(), "No user found with the given Student ID.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(getApplicationContext(), "Error fetching user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    });
                         })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(getApplicationContext(), "Error fetching user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        });
+                        .setNegativeButton("No", (dialog, which) -> {
+                            // Dismiss the dialog
+                            dialog.dismiss();
+                        })
+                        .create()
+                        .show();
             }
         });
+
 
     }
 
