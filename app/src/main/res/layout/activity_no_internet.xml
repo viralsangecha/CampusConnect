@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@drawable/nointernet_background">
+
+    <!-- Icon for No Internet -->
+    <com.airbnb.lottie.LottieAnimationView
+        android:id="@+id/animation_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:lottie_rawRes="@raw/nointernet"
+        app:lottie_autoPlay="true"
+        app:lottie_loop="true" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:layout_marginTop="500dp"
+        android:orientation="vertical">
+        <!-- Message for No Internet -->
+        <TextView
+            android:id="@+id/no_internet_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="16dp"
+            android:fontFamily="sans-serif-medium"
+            android:text="Oops! No Internet Connection"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <!-- Subtext for Instructions -->
+        <TextView
+            android:id="@+id/no_internet_subtext"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/no_internet_message"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="8dp"
+            android:fontFamily="sans-serif"
+            android:text="Please check your connection and try again."
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <!-- Retry Button -->
+        <Button
+            android:id="@+id/retry_button"
+            android:layout_width="200dp"
+            android:layout_height="50dp"
+            android:layout_below="@id/no_internet_subtext"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/rounded_button"
+            android:fontFamily="sans-serif-medium"
+            android:text="Retry"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+    </LinearLayout>
+</RelativeLayout>

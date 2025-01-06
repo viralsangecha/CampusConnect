@@ -36,8 +36,7 @@ public class student_profile extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_student_profile);
-
-
+        LoadingDialog loadingDialog = new LoadingDialog(this);
 
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setSelectedItemId(R.id.sprofile);
@@ -111,6 +110,8 @@ public class student_profile extends AppCompatActivity {
                     return;
                 }
 
+                // Show the dialog
+                loadingDialog.show();
                 // Get the current user from Firebase Auth
                 FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -121,8 +122,12 @@ public class student_profile extends AppCompatActivity {
                             .addOnCompleteListener( task -> {
                                 if (task.isSuccessful()) {
                                     // Password updated successfully
+                                    // Perform your login task here, and dismiss the dialog when done
+                                    loadingDialog.dismiss();
                                     Toast.makeText(getApplicationContext(), "Password updated successfully", Toast.LENGTH_SHORT).show();
                                 } else {
+                                    // Perform your login task here, and dismiss the dialog when done
+                                    loadingDialog.dismiss();
                                     // If password update failed
                                     Toast.makeText(getApplicationContext(), "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                                 }

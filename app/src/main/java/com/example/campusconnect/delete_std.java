@@ -36,6 +36,7 @@ public class delete_std extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_delete_std);
+        LoadingDialog loadingDialog = new LoadingDialog(this);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -53,8 +54,12 @@ public class delete_std extends AppCompatActivity {
 
         // Set up search button click listener
         search.setOnClickListener(v -> {
+            // Show the dialog
+            loadingDialog.show();
             String searchTerm = search_std.getText().toString().trim().toLowerCase();
             if (!searchTerm.isEmpty()) {
+                // Perform your login task here, and dismiss the dialog when done
+                loadingDialog.dismiss();
                 // Fetch students filtered by the search term (name)
                 fetchStudents(db, classWiseStudents, classStudentCount, searchTerm);
             }
@@ -71,7 +76,6 @@ public class delete_std extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Enter Student ID", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
                 int stdidToDelete = Integer.parseInt(did); // Replace with the stdid you want to delete
 
                 // Show confirmation dialog
@@ -79,6 +83,7 @@ public class delete_std extends AppCompatActivity {
                         .setTitle("Delete Confirmation")
                         .setMessage("Are you sure you want to delete the user with ID: " + stdidToDelete + "?")
                         .setPositiveButton("Yes", (dialog, which) -> {
+                            loadingDialog.show();
                             // Proceed with deletion
                             db.collection("users")
                                     .whereEqualTo("stdid", stdidToDelete)
@@ -95,16 +100,20 @@ public class delete_std extends AppCompatActivity {
                                                     .delete()
                                                     .addOnCompleteListener(deleteTask -> {
                                                         if (deleteTask.isSuccessful()) {
+                                                            loadingDialog.dismiss();
                                                             Toast.makeText(getApplicationContext(), "User deleted successfully!", Toast.LENGTH_SHORT).show();
                                                         } else {
+                                                            loadingDialog.dismiss();
                                                             Toast.makeText(getApplicationContext(), "Failed to delete user.", Toast.LENGTH_SHORT).show();
                                                         }
                                                     });
                                         } else {
+                                            loadingDialog.dismiss();
                                             Toast.makeText(getApplicationContext(), "No user found with the given Student ID.", Toast.LENGTH_SHORT).show();
                                         }
                                     })
                                     .addOnFailureListener(e -> {
+                                        loadingDialog.dismiss();
                                         Toast.makeText(getApplicationContext(), "Error fetching user: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
                         })

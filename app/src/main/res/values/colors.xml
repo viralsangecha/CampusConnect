@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="transparent_black">#80000000</color>
     <color name="cyan">#00C6FF</color>
     <color name="light_gray">#F8F9FA</color>
     <color name="card_background">#FFFFFF</color>

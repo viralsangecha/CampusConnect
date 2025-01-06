@@ -79,7 +79,6 @@ public class student_dashboard extends AppCompatActivity {
     ListView attendanceListView;
     ArrayAdapter<String> attendanceAdapter;
     List<String> attendanceList = new ArrayList<>();
-    ProgressBar loadingSpinner,markloading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,10 +87,8 @@ public class student_dashboard extends AppCompatActivity {
         setContentView(R.layout.activity_student_dashboard);
         AutoMarkAbsence autoMarkAbsence = new AutoMarkAbsence();
         autoMarkAbsence.fetchAndMarkAbsence();
-        loadingSpinner = findViewById(R.id.stddash_loading);
-        markloading = findViewById(R.id.markatten_loading);
 
-
+        LoadingDialog loadingDialog = new LoadingDialog(this);
 
         // Initialize ListView and Adapter
         attendanceListView = findViewById(R.id.showatten);
@@ -159,7 +156,7 @@ public class student_dashboard extends AppCompatActivity {
         mark_attendence.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                markloading.setVisibility(View.VISIBLE);
+
                 // Ensure user and todayDate are properly initialized
                 if (user == null || todayDate == null) {
                     Toast.makeText(student_dashboard.this, "User or date is not initialized", Toast.LENGTH_SHORT).show();
@@ -172,6 +169,8 @@ public class student_dashboard extends AppCompatActivity {
                     Toast.makeText(student_dashboard.this, "User email is not available", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                // Show the dialog
+                loadingDialog.show();
 
                 // Fetch student details (name, studentId, and class_name) from Firestore using email as the document ID
                 FirebaseFirestore firestore = FirebaseFirestore.getInstance();
@@ -186,6 +185,8 @@ public class student_dashboard extends AppCompatActivity {
                             String class_name = document.getString("class");
 
                             if (name == null || studentId == null || class_name == null) {
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 Toast.makeText(student_dashboard.this, "Failed to retrieve user details", Toast.LENGTH_SHORT).show();
                                 return;
                             }
@@ -204,7 +205,8 @@ public class student_dashboard extends AppCompatActivity {
                                     .setValue(attendanceData) // Set the data
                                     .addOnSuccessListener(aVoid -> {
                                         Log.d("Firebase", "Attendance marked successfully");
-                                        markloading.setVisibility(View.GONE);
+                                        // Perform your login task here, and dismiss the dialog when done
+                                        loadingDialog.dismiss();
                                         Toast.makeText(student_dashboard.this, "Attendance Marked!", Toast.LENGTH_LONG).show();
                                     })
                                     .addOnFailureListener(e -> {
@@ -225,16 +227,15 @@ public class student_dashboard extends AppCompatActivity {
         Getatten.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 attendanceList.clear(); // Clear the list before adding new data
-
-                loadingSpinner.setVisibility(View.VISIBLE);
                 // Get the current logged-in user
                 FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if (user == null) {
                     Toast.makeText(student_dashboard.this, "User not logged in.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                // Perform your login task here, and dismiss the dialog when done
+                loadingDialog.show();
 
                 String userEmail = user.getEmail(); // Get the user's email
 
@@ -268,7 +269,6 @@ public class student_dashboard extends AppCompatActivity {
 
                                         // Match the logged-in user's email
                                         if (email != null && email.equals(userEmail)) {
-                                            loadingSpinner.setVisibility(View.GONE);
                                             String name = studentSnapshot.child("name").getValue(String.class);
                                             String status = studentSnapshot.child("status").getValue(String.class);
 
@@ -276,6 +276,8 @@ public class student_dashboard extends AppCompatActivity {
                                             String attendanceRecord = "Date: " + date + "\n"
                                                     + "Name: " + name + "\n"
                                                     + "Status: " + status;
+                                            // Perform your login task here, and dismiss the dialog when done
+                                            loadingDialog.dismiss();
                                             attendanceList.add(attendanceRecord);
                                         }
                                     }
@@ -286,9 +288,13 @@ public class student_dashboard extends AppCompatActivity {
                             attendanceAdapter.notifyDataSetChanged();
 
                             if (attendanceList.isEmpty()) {
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 Toast.makeText(student_dashboard.this, "No attendance records found for this user.", Toast.LENGTH_SHORT).show();
                             }
                         } else {
+                            // Perform your login task here, and dismiss the dialog when done
+                            loadingDialog.dismiss();
                             Toast.makeText(student_dashboard.this, "No attendance records found.", Toast.LENGTH_SHORT).show();
                         }
                     }

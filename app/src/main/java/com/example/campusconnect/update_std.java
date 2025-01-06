@@ -31,6 +31,8 @@ public class update_std extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_update_std);
+        LoadingDialog loadingDialog = new LoadingDialog(this);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -71,6 +73,7 @@ public class update_std extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Please fill in all fields.", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                loadingDialog.show();
 
                 int stdid = Integer.parseInt(std_id.getText().toString());
                 // Reference to Firestore
@@ -97,17 +100,26 @@ public class update_std extends AppCompatActivity {
                                         .update(updatedData)
                                         .addOnCompleteListener(updateTask -> {
                                             if (updateTask.isSuccessful()) {
+                                                // Perform your login task here, and dismiss the dialog when done
+                                                loadingDialog.dismiss();
                                                 Toast.makeText(getApplicationContext(), "Student updated successfully!", Toast.LENGTH_SHORT).show();
                                             } else {
+                                                // Perform your login task here, and dismiss the dialog when done
+                                                loadingDialog.dismiss();
                                                 Toast.makeText(getApplicationContext(), "Failed to update student.", Toast.LENGTH_SHORT).show();
                                             }
                                         });
                             }
                             else {
+
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 Toast.makeText(getApplicationContext(), "No student found with the given ID.", Toast.LENGTH_SHORT).show();
                             }
                         })
                         .addOnFailureListener(e -> {
+                            // Perform your login task here, and dismiss the dialog when done
+                            loadingDialog.dismiss();
                             Toast.makeText(getApplicationContext(), "Error fetching student: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
             }

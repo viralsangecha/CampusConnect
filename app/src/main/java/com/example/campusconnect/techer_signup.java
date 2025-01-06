@@ -79,6 +79,8 @@ public class techer_signup extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_techer_signup);
+        LoadingDialog loadingDialog = new LoadingDialog(this);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -119,29 +121,32 @@ public class techer_signup extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        teach_signup=findViewById(R.id.teacher_signup_btn);
+        teach_signup = findViewById(R.id.teacher_signup_btn);
         teach_signup.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String email,password;
-                email=teacher_username_signup.getText().toString();
-                password=teacher_password_signup.getText().toString();
-                if (email.isEmpty() || password.isEmpty() || teacher_name.getText().toString().isEmpty())
-                {
-                    Toast.makeText(techer_signup.this, "Enter Email or password", Toast.LENGTH_SHORT).show();
+                String email, password;
+                email = teacher_username_signup.getText().toString();
+                password = teacher_password_signup.getText().toString();
+
+                if (email.isEmpty() || password.isEmpty() || teacher_name.getText().toString().isEmpty()) {
+                    Toast.makeText(techer_signup.this, "Enter all required fields", Toast.LENGTH_SHORT).show();
                     return;
                 }
+
                 String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
-                if (!email.matches(emailPattern))
-                {
-                    Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+                if (!email.matches(emailPattern)) {
+                    Toast.makeText(getApplicationContext(), "Invalid Email", Toast.LENGTH_SHORT).show();
                     return;
                 }
-                if (password.length()<6)
-                {
-                    Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
+
+                if (password.length() < 6) {
+                    Toast.makeText(getApplicationContext(), "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
                     return;
                 }
+
+                // Show the loading dialog
+                loadingDialog.show();
 
                 FirebaseAuth auth = FirebaseAuth.getInstance();
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -151,24 +156,47 @@ public class techer_signup extends AppCompatActivity {
                             if (task.isSuccessful()) {
                                 String uid = auth.getCurrentUser().getEmail();
                                 Map<String, Object> userData = new HashMap<>();
-                                userData.put("name",teacher_name.getText().toString() );
+                                userData.put("name", teacher_name.getText().toString());
                                 userData.put("email", email);
-                                userData.put("role","teacher");
+                                userData.put("role", "teacher");
 
-
+                                // Check if the user already exists in Firestore
                                 db.collection("users").document(teacher_username_signup.getText().toString())
-                                        .set(userData)
-                                        .addOnSuccessListener(aVoid -> {
-                                            Toast.makeText(techer_signup.this, "Account created", Toast.LENGTH_SHORT).show();
-                                            Intent i=new Intent(getApplicationContext(), teacher_dashboard.class);
-                                            startActivity(i);
-                                            finish();
+                                        .get()
+                                        .addOnCompleteListener(userCheckTask -> {
+                                            if (userCheckTask.isSuccessful() && userCheckTask.getResult().exists()) {
+                                                loadingDialog.dismiss();
+                                                Toast.makeText(techer_signup.this, "User already exists", Toast.LENGTH_SHORT).show();
+                                            } else {
+                                                // Add new user to Firestore
+                                                db.collection("users").document(teacher_username_signup.getText().toString())
+                                                        .set(userData)
+                                                        .addOnSuccessListener(aVoid -> {
+                                                            Toast.makeText(techer_signup.this, "Account created", Toast.LENGTH_SHORT).show();
+                                                            Intent i = new Intent(getApplicationContext(), teacher_dashboard.class);
+                                                            startActivity(i);
+                                                            loadingDialog.dismiss();
+                                                            finish();
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            loadingDialog.dismiss();
+                                                            Toast.makeText(techer_signup.this, "Failed to create account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                        });
+                                            }
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            loadingDialog.dismiss();
+                                            Toast.makeText(techer_signup.this, "Error checking user existence: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                         });
+                            } else {
+                                loadingDialog.dismiss();
+                                String errorMessage = task.getException() != null ? task.getException().getMessage() : "Signup failed";
+                                Toast.makeText(techer_signup.this, errorMessage, Toast.LENGTH_SHORT).show();
                             }
                         });
-
             }
         });
+
 
     }
 }

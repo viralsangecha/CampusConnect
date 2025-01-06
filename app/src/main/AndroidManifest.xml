@@ -17,6 +17,9 @@
         android:theme="@style/Theme.CampusConnect"
         tools:targetApi="31">
         <activity
+            android:name=".NoInternetActivity"
+            android:exported="false" />
+        <activity
             android:name=".delete_std"
             android:exported="false" />
         <activity

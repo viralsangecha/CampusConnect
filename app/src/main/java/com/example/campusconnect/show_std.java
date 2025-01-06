@@ -30,6 +30,7 @@ public class show_std extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_std);
+        LoadingDialog loadingDialog = new LoadingDialog(this);
 
         std_list = findViewById(R.id.std_list);
         search_std = findViewById(R.id.search_std);  // Assuming search_std is the ID of EditText for search
@@ -44,11 +45,14 @@ public class show_std extends AppCompatActivity {
 
         // Set up search button click listener
         search.setOnClickListener(v -> {
+            loadingDialog.show();
             String searchTerm = search_std.getText().toString().trim().toLowerCase();
             if (!searchTerm.isEmpty()) {
+                loadingDialog.dismiss();
                 // Fetch students filtered by the search term (name)
                 fetchStudents(db, classWiseStudents, classStudentCount, searchTerm);
             } else {
+                loadingDialog.dismiss();
                 // If search term is empty, show all students
                 fetchStudents(db, classWiseStudents, classStudentCount, "");
             }

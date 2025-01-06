@@ -1,6 +1,9 @@
 package com.example.campusconnect;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -31,17 +34,25 @@ public class MainActivity extends AppCompatActivity {
     Button gotote,gotostd,teach_signup_btn;
     FirebaseAuth auth=FirebaseAuth.getInstance();
     FirebaseFirestore db = FirebaseFirestore.getInstance();
-    ProgressBar loadingSpinner;
-
 
 
     @Override
     public void onStart() {
         super.onStart();
+        if (!isNetworkAvailable()) {
+            // Redirect to No Internet Activity
+            Intent intent = new Intent(this, NoInternetActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+        LoadingDialog loadingDialog = new LoadingDialog(this);
         // Check if a user is signed in
         FirebaseUser currentUser = auth.getCurrentUser();
         if (currentUser != null)
         {
+            // Show the dialog
+            loadingDialog.show();
             String uid = currentUser.getEmail();
 
             // Fetch the user's role from Firestore
@@ -53,10 +64,11 @@ public class MainActivity extends AppCompatActivity {
                             String role = documentSnapshot.getString("role");
                             if ("student".equals(role))
                             {
-
                                 // Redirect to Student Dashboard
                                 Intent i = new Intent(getApplicationContext(), student_dashboard.class);
                                 startActivity(i);
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 finish(); // Close the current activity
                             }
                             else if ("teacher".equals(role))
@@ -64,6 +76,8 @@ public class MainActivity extends AppCompatActivity {
                                 // Redirect to Teacher Dashboard
                                 Intent i = new Intent(getApplicationContext(), teacher_dashboard.class);
                                 startActivity(i);
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 finish(); // Close the current activity
                             }
                             else
@@ -75,10 +89,6 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
         }
-        else
-        {
-            loadingSpinner.setVisibility(View.GONE);
-        }
     }
 
 
@@ -87,14 +97,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        loadingSpinner = findViewById(R.id.loadingSpinner);
-        loadingSpinner.setVisibility(View.VISIBLE);
 
         gotote=findViewById(R.id.gotote);
         gotote.setOnClickListener(new View.OnClickListener() {
@@ -128,5 +136,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

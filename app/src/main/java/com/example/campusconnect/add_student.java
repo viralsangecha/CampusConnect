@@ -37,15 +37,12 @@ public class add_student extends AppCompatActivity {
     Spinner class_list;
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUser user = auth.getCurrentUser();
-
-    ProgressBar loadingSpinner;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_add_student);
-
-        loadingSpinner = findViewById(R.id.addstdloading);
+        LoadingDialog loadingDialog = new LoadingDialog(this);
         BottomNavigationView bottomNavigationView = findViewById(R.id.bottom_navigation);
         bottomNavigationView.setSelectedItemId(R.id.addstd);
         bottomNavigationView.setOnItemSelectedListener(new BottomNavigationView.OnItemSelectedListener() {
@@ -180,7 +177,8 @@ public class add_student extends AppCompatActivity {
                 return;
             }
 
-            loadingSpinner.setVisibility(View.VISIBLE);
+            // Show the dialog
+            loadingDialog.show();
             FirebaseAuth auth = FirebaseAuth.getInstance();
             FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -218,7 +216,7 @@ public class add_student extends AppCompatActivity {
                             String teacherEmail = prefs.getString("teacherEmail", null);
                             String teacherPassword = prefs.getString("teacherPassword", null);
 
-                            loadingSpinner.setVisibility(View.GONE);
+                            // Perform your login task here, and dismiss the dialog when done
                             auth.signOut();
 
                             if (teacherEmail != null && teacherPassword != null)
@@ -227,11 +225,15 @@ public class add_student extends AppCompatActivity {
                                 {
                                     if (signInTask.isSuccessful())
                                     {
+                                        // Perform your login task here, and dismiss the dialog when done
+                                        loadingDialog.dismiss();
                                         Toast.makeText(this, "Switched back to teacher account.", Toast.LENGTH_SHORT).show();
                                         startActivity(new Intent(this, add_student.class));
                                     }
                                     else
                                     {
+                                        // Perform your login task here, and dismiss the dialog when done
+                                        loadingDialog.dismiss();
                                         Toast.makeText(this, "Failed to log back into teacher account.", Toast.LENGTH_SHORT).show();
                                     }
                                     finish();
@@ -239,6 +241,8 @@ public class add_student extends AppCompatActivity {
                             }
                             else
                             {
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 Toast.makeText(this, "Teacher session not found. Please log in again.", Toast.LENGTH_SHORT).show();
                                 startActivity(new Intent(this, teacher_login.class));
                                 finish();
@@ -247,6 +251,8 @@ public class add_student extends AppCompatActivity {
                     }
                 });
             }).addOnFailureListener(e -> {
+                // Perform your login task here, and dismiss the dialog when done
+                loadingDialog.dismiss();
                 Toast.makeText(this, "Failed to generate std_id. Try again.", Toast.LENGTH_SHORT).show();
             });
         });

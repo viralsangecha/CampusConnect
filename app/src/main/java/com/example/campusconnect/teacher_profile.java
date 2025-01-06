@@ -36,6 +36,7 @@ public class teacher_profile extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_teacher_profile);
+        LoadingDialog loadingDialog = new LoadingDialog(this);
 
         tname=findViewById(R.id.tname);
         temail=findViewById(R.id.temail);
@@ -79,7 +80,7 @@ public class teacher_profile extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Please enter a new password", Toast.LENGTH_SHORT).show();
                     return;
                 }
-
+                loadingDialog.show();
                 // Get the current user from Firebase Auth
                 FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
 
@@ -90,14 +91,20 @@ public class teacher_profile extends AppCompatActivity {
                             .addOnCompleteListener( task -> {
                                 if (task.isSuccessful()) {
                                     // Password updated successfully
+                                    // Perform your login task here, and dismiss the dialog when done
+                                    loadingDialog.dismiss();
                                     Toast.makeText(getApplicationContext(), "Password updated successfully", Toast.LENGTH_SHORT).show();
                                 } else {
+                                    // Perform your login task here, and dismiss the dialog when done
+                                    loadingDialog.dismiss();
                                     // If password update failed
                                     Toast.makeText(getApplicationContext(), "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                                 }
                             });
                 } else {
                     // If no user is logged in
+                    // Perform your login task here, and dismiss the dialog when done
+                    loadingDialog.dismiss();
                     Toast.makeText(getApplicationContext(), "No user is logged in", Toast.LENGTH_SHORT).show();
                 }
             }

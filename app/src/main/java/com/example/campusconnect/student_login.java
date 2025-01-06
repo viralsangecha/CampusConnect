@@ -80,6 +80,7 @@ public class student_login extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_student_login);
 
+        LoadingDialog loadingDialog = new LoadingDialog(this);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -122,6 +123,7 @@ public class student_login extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
+
         student_login_btn = findViewById(R.id.student_login_btn);
         student_login_btn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -146,6 +148,8 @@ public class student_login extends AppCompatActivity {
                     return;
                 }
 
+                // Show the dialog
+                loadingDialog.show();
                 FirebaseAuth auth = FirebaseAuth.getInstance();
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -168,26 +172,40 @@ public class student_login extends AppCompatActivity {
                                             Toast.makeText(getApplicationContext(), "Student Login Successful", Toast.LENGTH_SHORT).show();
                                             Intent i = new Intent(getApplicationContext(), student_dashboard.class);
                                             startActivity(i);
+                                            // Perform your login task here, and dismiss the dialog when done
+                                            loadingDialog.dismiss();
                                             finish(); // Close the login activity
                                         }
                                         else if ("teacher".equals(role))
                                         {
+                                            // Perform your login task here, and dismiss the dialog when done
+                                            loadingDialog.dismiss();
                                             // Redirect to Teacher Dashboard (if allowed)
                                             Toast.makeText(getApplicationContext(), "user not found or wrong password/uesername", Toast.LENGTH_SHORT).show();
                                         }
                                         else
                                         {
+                                            // Perform your login task here, and dismiss the dialog when done
+                                            loadingDialog.dismiss();
                                             Toast.makeText(getApplicationContext(), "Invalid Role", Toast.LENGTH_SHORT).show();
                                         }
                                     }
                                     else
                                     {
+                                        // Perform your login task here, and dismiss the dialog when done
+                                        loadingDialog.dismiss();
                                         Toast.makeText(getApplicationContext(), "User data not found", Toast.LENGTH_SHORT).show();
                                     }
                                 }).addOnFailureListener(e -> {
+                                    // Perform your login task here, and dismiss the dialog when done
+                                    loadingDialog.dismiss();
                                     Toast.makeText(getApplicationContext(), "Failed to fetch user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                 });
-                            } else {
+                            }
+                            else
+                            {
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 Toast.makeText(getApplicationContext(), "Authentication Failed: " , Toast.LENGTH_SHORT).show();
                             }
                         });

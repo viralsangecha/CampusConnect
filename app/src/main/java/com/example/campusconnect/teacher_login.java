@@ -78,6 +78,8 @@ public class teacher_login extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_teacher_login);
 
+        LoadingDialog loadingDialog = new LoadingDialog(this);
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -140,6 +142,8 @@ public class teacher_login extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Invalid Email ", Toast.LENGTH_SHORT).show();
                     return;
                 }
+                // Show the dialog
+                loadingDialog.show();
 
                 FirebaseAuth auth = FirebaseAuth.getInstance();
                 FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -172,30 +176,42 @@ public class teacher_login extends AppCompatActivity {
                                                     Intent i = new Intent(getApplicationContext(), teacher_dashboard.class);
                                                     i.putExtra("teacher_password",Teacher_password_login.getText().toString());
                                                     startActivity(i);
+                                                    // Perform your login task here, and dismiss the dialog when done
+                                                    loadingDialog.dismiss();
                                                     finish(); // Close the login activity
                                                 }
                                                 else if ("student".equals(role))
                                                 {
+                                                    // Perform your login task here, and dismiss the dialog when done
+                                                    loadingDialog.dismiss();
                                                     // User is not authorized as teacher
                                                     Toast.makeText(getApplicationContext(), "user not found or wrong password/username", Toast.LENGTH_SHORT).show();
 
                                                 }
                                                 else
                                                 {
+                                                    // Perform your login task here, and dismiss the dialog when done
+                                                    loadingDialog.dismiss();
                                                     // Handle invalid role
                                                     Toast.makeText(getApplicationContext(), "Invalid role detected", Toast.LENGTH_SHORT).show();
                                                 }
                                             }
                                             else {
+                                                // Perform your login task here, and dismiss the dialog when done
+                                                loadingDialog.dismiss();
                                                 // Handle case when user data is not found
                                                 Toast.makeText(getApplicationContext(), "User data not found ", Toast.LENGTH_SHORT).show();
                                             }
                                         })
                                         .addOnFailureListener(e -> {
+                                            // Perform your login task here, and dismiss the dialog when done
+                                            loadingDialog.dismiss();
                                             // Handle Firestore access failure
                                             Toast.makeText(getApplicationContext(), "Failed to fetch user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                         });
                             } else {
+                                // Perform your login task here, and dismiss the dialog when done
+                                loadingDialog.dismiss();
                                 // Handle authentication failure
                                 Toast.makeText(getApplicationContext(), "Authentication Failed!", Toast.LENGTH_SHORT).show();
                             }
