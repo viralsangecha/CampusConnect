@@ -78,10 +78,19 @@ public class student_dashboard extends AppCompatActivity {
     FirebaseUser user = auth.getCurrentUser();
     Button mark_attendence, Getatten;
     ImageView student_logout_btn;
-    TextView showatten, show_std_name;
+    TextView  show_std_name,textview5;
     ListView attendanceListView;
     ArrayAdapter<String> attendanceAdapter;
     List<String> attendanceList = new ArrayList<>();
+
+    private FusedLocationProviderClient fusedLocationClient;
+    private Location currentLocation;
+    private Handler locationHandler;
+    private Runnable locationRunnable;
+    private static final long LOCATION_CHECK_INTERVAL = 10000; // 10 seconds
+    private static final double TARGET_LATITUDE = 21.6888399; // Replace with your target latitude
+    private static final double TARGET_LONGITUDE = 69.7142626; // Replace with your target longitude
+    private static final float LOCATION_RANGE = 10.0f; // Range in meters
 
     @Override
     protected void onStart() {
@@ -103,6 +112,22 @@ public class student_dashboard extends AppCompatActivity {
         AutoMarkAbsence autoMarkAbsence = new AutoMarkAbsence();
         autoMarkAbsence.fetchAndMarkAbsence();
 
+        // Initialize FusedLocationProviderClient
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // Request location permissions
+        requestLocationPermission();
+
+        // Initialize Handler
+        locationHandler = new Handler(Looper.getMainLooper());
+        locationRunnable = new Runnable() {
+            @Override
+            public void run() {
+                getLocation();
+                locationHandler.postDelayed(this, LOCATION_CHECK_INTERVAL);
+            }
+        };
+        locationHandler.post(locationRunnable);
         LoadingDialog loadingDialog = new LoadingDialog(this);
 
         // Initialize ListView and Adapter
@@ -140,6 +165,7 @@ public class student_dashboard extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+
 
         student_logout_btn = findViewById(R.id.student_logout_btn);
         student_logout_btn.setOnClickListener(v -> {
@@ -341,5 +367,79 @@ public class student_dashboard extends AppCompatActivity {
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
+    private static final int REQUEST_LOCATION_PERMISSION = 1;
+
+    private void requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    REQUEST_LOCATION_PERMISSION);
+        } else {
+            // Permission already granted
+            getLocation();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted
+                getLocation();
+            } else {
+                // Permission denied
+                Toast.makeText(this, "Location permission is required to mark attendance.", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+    @Override
+    protected void onDestroy()
+    {
+        super.onDestroy();
+        if (locationHandler != null) {
+            locationHandler.removeCallbacks(locationRunnable);
+        }
+    }
+
+    private void getLocation()
+    {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation()
+                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
+                        @Override
+                        public void onSuccess(Location location) {
+                            if (location != null) {
+                                currentLocation = location;
+                                checkLocationInRange();
+                            }
+                        }
+                    });
+        }
+    }
+
+    private void checkLocationInRange() {
+        if (currentLocation != null) {
+            float[] results = new float[1];
+            Location.distanceBetween(currentLocation.getLatitude(), currentLocation.getLongitude(),
+                    TARGET_LATITUDE, TARGET_LONGITUDE, results);
+            float distanceInMeters = results[0];
+
+
+            if (distanceInMeters <= LOCATION_RANGE) {
+                mark_attendence.setEnabled(true);
+                textview5=findViewById(R.id.textView5);
+                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude());
+                Toast.makeText(this, "You are within range. You can mark attendance.", Toast.LENGTH_SHORT).show();
+            } else {
+                mark_attendence.setEnabled(false);
+                textview5=findViewById(R.id.textView5);
+                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude());
+                Toast.makeText(this, "You are out of range. Attendance marking is disabled.", Toast.LENGTH_SHORT).show();
+            }
+        }
     }
 }
