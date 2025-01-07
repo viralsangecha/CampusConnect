@@ -1,7 +1,10 @@
 package com.example.campusconnect;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -37,6 +40,19 @@ public class add_student extends AppCompatActivity {
     Spinner class_list;
     FirebaseAuth auth = FirebaseAuth.getInstance();
     FirebaseUser user = auth.getCurrentUser();
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!isNetworkAvailable()) {
+            // Redirect to No Internet Activity
+            Intent intent = new Intent(this, NoInternetActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -276,6 +292,11 @@ public class add_student extends AppCompatActivity {
 
             }
         });
-
+    }
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }

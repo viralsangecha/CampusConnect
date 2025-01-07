@@ -2,10 +2,13 @@ package com.example.campusconnect;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -79,6 +82,18 @@ public class student_dashboard extends AppCompatActivity {
     ListView attendanceListView;
     ArrayAdapter<String> attendanceAdapter;
     List<String> attendanceList = new ArrayList<>();
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if (!isNetworkAvailable()) {
+            // Redirect to No Internet Activity
+            Intent intent = new Intent(this, NoInternetActivity.class);
+            startActivity(intent);
+            finish();
+            return;
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -320,5 +335,11 @@ public class student_dashboard extends AppCompatActivity {
                 }
             }
         });
+    }
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }
