@@ -88,9 +88,9 @@ public class student_dashboard extends AppCompatActivity {
     private Handler locationHandler;
     private Runnable locationRunnable;
     private static final long LOCATION_CHECK_INTERVAL = 10000; // 10 seconds
-    private static final double TARGET_LATITUDE = 21.6888399; // Replace with your target latitude
-    private static final double TARGET_LONGITUDE = 69.7142626; // Replace with your target longitude
-    private static final float LOCATION_RANGE = 10.0f; // Range in meters
+    private static final double TARGET_LATITUDE = 21.6846159; // Replace with your target latitude
+    private static final double TARGET_LONGITUDE = 69.7154751; // Replace with your target longitude
+    private static final float LOCATION_RANGE = 100.0f; // Range in meters
 
     @Override
     protected void onStart() {
@@ -427,19 +427,22 @@ public class student_dashboard extends AppCompatActivity {
             Location.distanceBetween(currentLocation.getLatitude(), currentLocation.getLongitude(),
                     TARGET_LATITUDE, TARGET_LONGITUDE, results);
             float distanceInMeters = results[0];
+            String d= String.valueOf(distanceInMeters);
+
 
 
             if (distanceInMeters <= LOCATION_RANGE) {
                 mark_attendence.setEnabled(true);
                 textview5=findViewById(R.id.textView5);
-                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude());
+                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude()+"distance:"+d);
                 Toast.makeText(this, "You are within range. You can mark attendance.", Toast.LENGTH_SHORT).show();
             } else {
                 mark_attendence.setEnabled(false);
                 textview5=findViewById(R.id.textView5);
-                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude());
+                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude()+"distance:"+d);
                 Toast.makeText(this, "You are out of range. Attendance marking is disabled.", Toast.LENGTH_SHORT).show();
             }
         }
     }
+
 }
