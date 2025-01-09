@@ -2,10 +2,13 @@ package com.example.campusconnect;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -29,6 +32,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -78,7 +82,7 @@ public class student_dashboard extends AppCompatActivity {
     FirebaseUser user = auth.getCurrentUser();
     Button mark_attendence, Getatten;
     ImageView student_logout_btn;
-    TextView  show_std_name,textview5;
+    TextView show_std_name, textview5;
     ListView attendanceListView;
     ArrayAdapter<String> attendanceAdapter;
     List<String> attendanceList = new ArrayList<>();
@@ -88,9 +92,10 @@ public class student_dashboard extends AppCompatActivity {
     private Handler locationHandler;
     private Runnable locationRunnable;
     private static final long LOCATION_CHECK_INTERVAL = 10000; // 10 seconds
-    private static final double TARGET_LATITUDE = 21.6846159; // Replace with your target latitude
-    private static final double TARGET_LONGITUDE = 69.7154751; // Replace with your target longitude
-    private static final float LOCATION_RANGE = 100.0f; // Range in meters
+    private static final double TARGET_LATITUDE = 21.6888286; // Replace with your target latitude
+    private static final double TARGET_LONGITUDE = 69.7143509; // Replace with your target longitude
+    private static final float LOCATION_RANGE = 30.0f; // Range in meters
+    private static final String CHANNEL_ID = "location_notification_channel";
 
     @Override
     protected void onStart() {
@@ -123,7 +128,7 @@ public class student_dashboard extends AppCompatActivity {
         locationRunnable = new Runnable() {
             @Override
             public void run() {
-                getLocation();
+                checkLocationSettings();
                 locationHandler.postDelayed(this, LOCATION_CHECK_INTERVAL);
             }
         };
@@ -166,7 +171,6 @@ public class student_dashboard extends AppCompatActivity {
             return insets;
         });
 
-
         student_logout_btn = findViewById(R.id.student_logout_btn);
         student_logout_btn.setOnClickListener(v -> {
             // Create an AlertDialog to confirm logout
@@ -193,7 +197,9 @@ public class student_dashboard extends AppCompatActivity {
         // Initialize Firebase Realtime Database reference
         DatabaseReference database = FirebaseDatabase.getInstance().getReference();
 
+
         mark_attendence = findViewById(R.id.mark_attendence);
+        mark_attendence.setEnabled(false);
         mark_attendence.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -362,12 +368,14 @@ public class student_dashboard extends AppCompatActivity {
             }
         });
     }
+
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
+
     private static final int REQUEST_LOCATION_PERMISSION = 1;
 
     private void requestLocationPermission() {
@@ -378,7 +386,7 @@ public class student_dashboard extends AppCompatActivity {
                     REQUEST_LOCATION_PERMISSION);
         } else {
             // Permission already granted
-            getLocation();
+            checkLocationSettings();
         }
     }
 
@@ -388,61 +396,159 @@ public class student_dashboard extends AppCompatActivity {
         if (requestCode == REQUEST_LOCATION_PERMISSION) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission granted
-                getLocation();
+                checkLocationSettings();
             } else {
                 // Permission denied
                 Toast.makeText(this, "Location permission is required to mark attendance.", Toast.LENGTH_SHORT).show();
             }
         }
     }
+
+    private void checkLocationSettings() {
+        LocationRequest locationRequest = LocationRequest.create()
+                .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                .setInterval(LOCATION_CHECK_INTERVAL)
+                .setFastestInterval(LOCATION_CHECK_INTERVAL);
+
+        LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder()
+                .addLocationRequest(locationRequest);
+
+        Task<LocationSettingsResponse> result = LocationServices.getSettingsClient(this)
+                .checkLocationSettings(builder.build());
+
+        result.addOnCompleteListener(new OnCompleteListener<LocationSettingsResponse>() {
+            @Override
+            public void onComplete(@NonNull Task<LocationSettingsResponse> task) {
+                try {
+                    LocationSettingsResponse response = task.getResult(ApiException.class);
+                    // All location settings are satisfied. Initialize location requests here.
+                    getLocation();
+                } catch (ApiException exception) {
+                    switch (exception.getStatusCode()) {
+                        case LocationSettingsStatusCodes.RESOLUTION_REQUIRED:
+                            // Location settings are not satisfied, but this can be fixed
+                            // by showing the user a dialog.
+                            try {
+                                ResolvableApiException resolvable = (ResolvableApiException) exception;
+                                resolvable.startResolutionForResult(student_dashboard.this, REQUEST_LOCATION_PERMISSION);
+                            } catch (IntentSender.SendIntentException e) {
+                                // Ignore the error.
+                            } catch (ClassCastException e) {
+                                // Ignore, should be an impossible error.
+                            }
+                            break;
+                        case LocationSettingsStatusCodes.SETTINGS_CHANGE_UNAVAILABLE:
+                            // Location settings are not satisfied. However, we have no way to fix the
+                            // settings so we won't show the dialog.
+                            Toast.makeText(student_dashboard.this, "Location settings are inadequate, and cannot be fixed here. Please enable location services manually.", Toast.LENGTH_LONG).show();
+                            break;
+                    }
+                }
+            }
+        });
+    }
+
     @Override
-    protected void onDestroy()
-    {
+    protected void onDestroy() {
         super.onDestroy();
         if (locationHandler != null) {
             locationHandler.removeCallbacks(locationRunnable);
         }
+        fusedLocationClient.removeLocationUpdates(locationCallback);
     }
 
-    private void getLocation()
-    {
+    private void getLocation() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.getLastLocation()
-                    .addOnSuccessListener(this, new OnSuccessListener<Location>() {
-                        @Override
-                        public void onSuccess(Location location) {
-                            if (location != null) {
-                                currentLocation = location;
-                                checkLocationInRange();
-                            }
-                        }
-                    });
+
+            LocationRequest locationRequest = LocationRequest.create()
+                    .setPriority(Priority.PRIORITY_HIGH_ACCURACY)
+                    .setInterval(LOCATION_CHECK_INTERVAL)
+                    .setFastestInterval(LOCATION_CHECK_INTERVAL);
+
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper());
         }
     }
 
+    private final LocationCallback locationCallback = new LocationCallback() {
+        @Override
+        public void onLocationResult(LocationResult locationResult) {
+            if (locationResult == null) {
+                return;
+            }
+            for (Location location : locationResult.getLocations()) {
+                if (location != null) {
+                    currentLocation = location;
+                    checkLocationInRange();
+                }
+            }
+        }
+    };
+    int v=0;
     private void checkLocationInRange() {
         if (currentLocation != null) {
             float[] results = new float[1];
             Location.distanceBetween(currentLocation.getLatitude(), currentLocation.getLongitude(),
                     TARGET_LATITUDE, TARGET_LONGITUDE, results);
             float distanceInMeters = results[0];
-            String d= String.valueOf(distanceInMeters);
-
+            String d = String.valueOf(distanceInMeters);
 
 
             if (distanceInMeters <= LOCATION_RANGE) {
+                v=v+1;
                 mark_attendence.setEnabled(true);
-                textview5=findViewById(R.id.textView5);
-                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude()+"distance:"+d);
-                Toast.makeText(this, "You are within range. You can mark attendance.", Toast.LENGTH_SHORT).show();
-            } else {
+                textview5 = findViewById(R.id.textView5);
+                //textview5.setText("latitude:-" + currentLocation.getLatitude() + ",longi:-" + currentLocation.getLongitude() + "distance:" + d);
+                textview5.setText("🟢😃You are Within Range");
+                textview5.setTextColor(Color.parseColor("#28A745"));
+
+                if(v==1)
+                {
+                    sendNotification("You are within range. You can mark attendance.");
+                    Toast.makeText(this, "You are within range. You can mark attendance.", Toast.LENGTH_SHORT).show();
+                    v=2;
+
+                }
+            }
+            else
+            {
+                v=0;
+                textview5.setText("🔴☹️You are out-of Range");
+                textview5.setTextColor(Color.parseColor("#9B111E"));
                 mark_attendence.setEnabled(false);
-                textview5=findViewById(R.id.textView5);
-                textview5.setText("latitude:-"+currentLocation.getLatitude()+",longi:-"+currentLocation.getLongitude()+"distance:"+d);
+                textview5 = findViewById(R.id.textView5);
+                //textview5.setText("latitude:-" + currentLocation.getLatitude() + ",longi:-" + currentLocation.getLongitude() + "distance:" + d);
                 Toast.makeText(this, "You are out of range. Attendance marking is disabled.", Toast.LENGTH_SHORT).show();
+                sendNotification("You are out of range. Attendance marking is disabled.");
             }
         }
     }
 
+    private void sendNotification(String message) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            CharSequence name = "Location Notification";
+            String description = "Notification channel for location updates";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Create the notification
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(R.drawable.campusconnecct) // Replace with your app's icon
+                .setContentTitle("Location Update")
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        // Notify
+        notificationManager.notify(1, builder.build());
+    }
+    // Other existing methods...
 }
