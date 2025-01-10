@@ -513,10 +513,11 @@ public class student_dashboard extends AppCompatActivity {
             else
             {
                 v=0;
+                textview5 = findViewById(R.id.textView5);
                 textview5.setText("🔴☹️You are out-of Range");
                 textview5.setTextColor(Color.parseColor("#9B111E"));
                 mark_attendence.setEnabled(false);
-                textview5 = findViewById(R.id.textView5);
+
                 //textview5.setText("latitude:-" + currentLocation.getLatitude() + ",longi:-" + currentLocation.getLongitude() + "distance:" + d);
                 Toast.makeText(this, "You are out of range. Attendance marking is disabled.", Toast.LENGTH_SHORT).show();
                 sendNotification("You are out of range. Attendance marking is disabled.");
