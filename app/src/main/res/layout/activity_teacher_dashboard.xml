@@ -76,14 +76,15 @@
             android:layout_height="wrap_content"
             app:cardCornerRadius="16dp"
             app:cardElevation="8dp"
-            android:layout_margin="16dp"
+            android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp"
+            android:layout_marginBottom="60dp"
             app:cardBackgroundColor="@color/sapphire_blue">
         <!-- Title for Today’s Present Students -->
         <TextView
             android:id="@+id/record_category"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="-:Today Present Students:-"
             android:textAlignment="center"
             android:textSize="20sp"
             android:fontFamily="sans-serif-medium"

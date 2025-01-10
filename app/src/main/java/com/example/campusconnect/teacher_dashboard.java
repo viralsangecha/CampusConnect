@@ -63,6 +63,7 @@ public class teacher_dashboard extends AppCompatActivity {
     FirebaseUser user = auth.getCurrentUser();
     ArrayAdapter<String> adapter;
     ArrayList<String> attendanceData = new ArrayList<>();
+    String todaydate;
 
     @Override
     protected void onStart() {
@@ -136,12 +137,17 @@ public class teacher_dashboard extends AppCompatActivity {
 
         show_tea_name = findViewById(R.id.show_tea_name);
         show_tea_name.setText("Welcome, " + user.getEmail());
-        record_cat.setText("-:Today Present Students:-");
         today_list = findViewById(R.id.today_list);
         search_input = findViewById(R.id.search_input);
         search_button = findViewById(R.id.search_button);
 
 
+        search_input.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openDatePickerDialog();
+            }
+        });
         search_input.setOnFocusChangeListener(new View.OnFocusChangeListener()
         {
           @Override
@@ -152,11 +158,10 @@ public class teacher_dashboard extends AppCompatActivity {
         });
 
 
+        todaydate=new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, attendanceData);
         today_list.setAdapter(adapter);
-
-        // Load today's attendance by default
-        loadAttendanceByDate(new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date()));
+        loadAttendanceByDate(todaydate);
 
         search_button.setOnClickListener(v -> {
             String query = search_input.getText().toString().trim();
@@ -164,6 +169,7 @@ public class teacher_dashboard extends AppCompatActivity {
                 Toast.makeText(this, "Please enter a name or date to search.", Toast.LENGTH_SHORT).show();
                 // Load today's attendance by default
                 loadAttendanceByDate(new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date()));
+                record_cat.setText("-:Today Present Students:-");
                 return;
             }
 
@@ -180,6 +186,7 @@ public class teacher_dashboard extends AppCompatActivity {
     }
 
     public void loadAttendanceByDate(String date) {
+
         LoadingDialog loadingDialog = new LoadingDialog(this);
         loadingDialog.show();
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference("Attendance").child(date);
@@ -188,9 +195,14 @@ public class teacher_dashboard extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 attendanceData.clear();
+                HashMap<String, Integer> presentCountMap = new HashMap<>(); // Class-wise present count
+                HashMap<String, Integer> absentCountMap = new HashMap<>();  // Class-wise absent count
 
                 for (DataSnapshot classSnapshot : snapshot.getChildren()) {
                     String className = classSnapshot.getKey();
+                    int classPresent = 0;
+                    int classAbsent = 0;
+
                     attendanceData.add("Class: " + className);
 
                     for (DataSnapshot studentSnapshot : classSnapshot.getChildren()) {
@@ -198,15 +210,42 @@ public class teacher_dashboard extends AppCompatActivity {
                         String email = studentSnapshot.child("email").getValue(String.class);
                         String status = studentSnapshot.child("status").getValue(String.class);
 
+                        if ("Present".equalsIgnoreCase(status)) {
+                            classPresent++;
+                        } else if ("Absent".equalsIgnoreCase(status)) {
+                            classAbsent++;
+                        }
+
+                        if (date.matches(todaydate)) {
+                            record_cat.setText("-:Today Present Students:-");
+                        } else {
+                            record_cat.setText("Records of " + date);
+                        }
+
                         attendanceData.add("  Name: " + name + "\n  Email: " + email + "\n  Status: " + status);
                     }
+
+                    // Store class-wise counts
+                    presentCountMap.put(className, classPresent);
+                    absentCountMap.put(className, classAbsent);
+
+                    attendanceData.add("----------------------------");
+                }
+
+                // Add class-wise summary to the attendance data
+                attendanceData.add("Class-Wise Summary:");
+                for (String className : presentCountMap.keySet()) {
+                    attendanceData.add("Class: " + className);
+                    attendanceData.add("  Total Present: " + presentCountMap.get(className));
+                    attendanceData.add("  Total Absent: " + absentCountMap.get(className));
                     attendanceData.add("----------------------------");
                 }
 
                 if (attendanceData.isEmpty()) {
-                    loadingDialog.dismiss();
+                    record_cat.setText("Records of " + date);
                     attendanceData.add("No attendance data available for " + date + ".");
                 }
+
                 loadingDialog.dismiss();
                 adapter.notifyDataSetChanged();
             }
@@ -218,6 +257,8 @@ public class teacher_dashboard extends AppCompatActivity {
             }
         });
     }
+
+
 
     private void searchAttendanceByName(String name) {
         LoadingDialog loadingDialog = new LoadingDialog(this);
@@ -228,11 +269,15 @@ public class teacher_dashboard extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 attendanceData.clear();
+                HashMap<String, Integer> presentCountMap = new HashMap<>(); // Class-wise present count
+                HashMap<String, Integer> absentCountMap = new HashMap<>();  // Class-wise absent count
 
                 for (DataSnapshot dateSnapshot : snapshot.getChildren()) {
                     String date = dateSnapshot.getKey();
 
                     for (DataSnapshot classSnapshot : dateSnapshot.getChildren()) {
+                        String className = classSnapshot.getKey();
+
                         for (DataSnapshot studentSnapshot : classSnapshot.getChildren()) {
                             String studentName = studentSnapshot.child("name").getValue(String.class);
                             String email = studentSnapshot.child("email").getValue(String.class);
@@ -242,25 +287,43 @@ public class teacher_dashboard extends AppCompatActivity {
                                 attendanceData.add("Date: " + date);
                                 attendanceData.add("  Name: " + studentName + "\n  Email: " + email + "\n  Status: " + status);
                                 attendanceData.add("----------------------------");
+
+                                // Update class-wise counters
+                                if ("Present".equalsIgnoreCase(status)) {
+                                    presentCountMap.put(className, presentCountMap.getOrDefault(className, 0) + 1);
+                                } else if ("Absent".equalsIgnoreCase(status)) {
+                                    absentCountMap.put(className, absentCountMap.getOrDefault(className, 0) + 1);
+                                }
                             }
                         }
                     }
                 }
 
                 if (attendanceData.isEmpty()) {
-                    loadingDialog.dismiss();
                     attendanceData.add("No attendance data found for " + name + ".");
+                } else {
+                    // Add class-wise summary
+                    attendanceData.add("Class-Wise Summary for " + name + ":");
+                    for (String className : presentCountMap.keySet()) {
+                        attendanceData.add("Class: " + className);
+                        attendanceData.add("  Total Present: " + presentCountMap.get(className));
+                        attendanceData.add("  Total Absent: " + absentCountMap.getOrDefault(className, 0));
+                        attendanceData.add("----------------------------");
+                    }
                 }
+
                 loadingDialog.dismiss();
                 adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError error) {
+                loadingDialog.dismiss();
                 Toast.makeText(getApplicationContext(), "Failed to fetch data: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
     }
+
     private void openDatePickerDialog() {
         Calendar calendar = Calendar.getInstance();
         DatePickerDialog datePickerDialog = new DatePickerDialog(this,
