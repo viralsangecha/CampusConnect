@@ -94,7 +94,7 @@ public class student_dashboard extends AppCompatActivity {
     private static final long LOCATION_CHECK_INTERVAL = 10000; // 10 seconds
     private static final double TARGET_LATITUDE = 21.6888286; // Replace with your target latitude
     private static final double TARGET_LONGITUDE = 69.7143509; // Replace with your target longitude
-    private static final float LOCATION_RANGE = 10.0f; // Range in meters
+    private static final float LOCATION_RANGE = 20.0f; // Range in meters
     private static final String CHANNEL_ID = "location_notification_channel";
 
     @Override
